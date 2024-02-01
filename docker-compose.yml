@@ -1,17 +1,19 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis
+
   db:
     image: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: bash -c "python manage.py makemigrations && python manage.py makemigrations Api && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
@@ -22,6 +24,27 @@ services:
       - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
+      - redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
-volumes:
-  postgres_data:
+  celery-worker:
+    build: .
+    volumes:
+      - .:/code
+    command: celery --app CreditApprovalSystem worker -l info
+    depends_on:
+      - db
+      - redis
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
