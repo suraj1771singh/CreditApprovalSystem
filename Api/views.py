@@ -36,7 +36,7 @@ def check_eligibility(request):
             if not loan_approval_status(customer_id, credit_score):
                 return Response({"customer_id": customer_id, "approval": False}, status=status.HTTP_200_OK)
 
-            new_interest_rate = calculate_interest_rate(customer_id)
+            new_interest_rate = calculate_interest_rate(credit_score)
 
             if interest_rate < new_interest_rate:
                 monthly_installment = calculate_monthly_installment(

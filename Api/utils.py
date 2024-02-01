@@ -96,7 +96,7 @@ def calculate_loan_approved_volume_score(customer_id):
         )
 
 
-def calculate_interest_rate(id, credit_score):
+def calculate_interest_rate(credit_score):
     try:
         if credit_score > 50:
             return 0.0
@@ -109,50 +109,48 @@ def calculate_interest_rate(id, credit_score):
 
     except Exception as e:
         logger.error(
-            f"Error calculating interest rates for customer {id}: {e}")
+            f"Error calculating interest rates for customer: {e}")
 
 
-def loan_approval_status(id, credit_score):
-    if credit_score < 10 or check_loan_limit_exceeded(id) or check_emi_limit_exceeded(id):
+def loan_approval_status(customer_id, credit_score):
+    if credit_score < 10 or check_loan_limit_exceeded(customer_id) or check_emi_limit_exceeded(customer_id):
         return False
     else:
         return True
 
 
-def get_count_of_loans(id):
+def get_count_of_loans(customer_id):
     try:
-        return Loan.objects.filter(customer_id=id).count()
+        return Loan.objects.filter(customer_id=customer_id).count()
     except Exception as e:
         logger.error(
-            f"Error getting count of loans for customer {id}: {e}")
+            f"Error getting count of loans for customer {customer_id}: {e}")
 
 
-def check_loan_limit_exceeded(id):
+def check_loan_limit_exceeded(customer_id):
     try:
-        customer = Customer.objects.get(pk=id)
-        approved_limit = customer.approved_limit
+        approved_limit = Customer.objects.get(pk=customer_id).approved_limit
 
-        current_loans_sum = Loan.objects.filter(customer_id=id).aggregate(
+        current_loans_sum = Loan.objects.filter(customer_id=customer_id).aggregate(
             sum_loan_amount=Sum('loan_amount'))['sum_loan_amount']
 
         return current_loans_sum > approved_limit
 
     except ObjectDoesNotExist:
-        logger.error(f"Customer or loan not found for customer {id}")
+        logger.error(f"Customer or loan not found for customer {customer_id}")
 
 
-def check_emi_limit_exceeded(id):
+def check_emi_limit_exceeded(customer_id):
     try:
-        customer = Customer.objects.get(pk=id)
-        monthly_salary = customer.monthly_income
+        monthly_salary = Customer.objects.get(pk=customer_id).monthly_income
 
-        current_emis_sum = Loan.objects.filter(id=id, is_approved=True).aggregate(
+        current_emis_sum = Loan.objects.filter(customer_id=customer_id).aggregate(
             sum_emis=Sum('monthly_installment'))['sum_emis']
 
         return current_emis_sum > 0.5 * monthly_salary
 
     except ObjectDoesNotExist:
-        logger.error(f"Customer or loan not found for customer {id}")
+        logger.error(f"Customer or loan not found for customer {customer_id}")
 
 
 def calculate_monthly_installment(loan_amount, interest_rate, tenure):
