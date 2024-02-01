@@ -153,3 +153,21 @@ def check_emi_limit_exceeded(id):
 
     except ObjectDoesNotExist:
         logger.error(f"Customer or loan not found for customer {id}")
+
+
+def calculate_monthly_installment(loan_amount, interest_rate, tenure):
+    try:
+        # Convert annual interest rate to monthly and calculate compound interest rate
+        monthly_interest_rate = interest_rate / 12 / 100
+        compound_interest_rate = (1 + monthly_interest_rate) ** tenure
+
+        # Calculate monthly installment using compound interest formula
+        emi = loan_amount * \
+            (monthly_interest_rate * compound_interest_rate) / \
+            (compound_interest_rate - 1)
+
+        return round(emi, 2)
+
+    except Exception as e:
+        logger.error(
+            f"Error in calculating EMI: {e}")
