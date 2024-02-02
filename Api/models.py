@@ -1,4 +1,3 @@
-import datetime
 from django.db import models
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -56,5 +55,8 @@ class Loan(models.Model):
         if not self.end_date:
             self.end_date = self.approval_date + \
                 relativedelta(months=+self.tenure)
-            
+
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.id}"

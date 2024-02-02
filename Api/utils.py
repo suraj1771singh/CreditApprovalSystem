@@ -1,9 +1,10 @@
 import logging
-from .models import Customer, Loan
+import math
 from django.db.models import Sum, Min
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
-import math
+
+from .models import Customer, Loan
 
 logger = logging.getLogger(__name__)
 

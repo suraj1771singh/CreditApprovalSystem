@@ -1,13 +1,10 @@
 from .models import Customer, Loan
 from rest_framework import serializers
-from .utils import loan_approval_status, calculate_interest_rate, calculate_credit_score, calculate_monthly_installment
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    customer_id = serializers.IntegerField(
-        source='get_customer_id', read_only=True)
-    name = serializers.CharField(
-        source='get_customer_full_name', read_only=True)
+    customer_id = serializers.IntegerField(source='get_customer_id', read_only=True)
+    name = serializers.CharField(source='get_customer_full_name', read_only=True)
 
     class Meta:
         model = Customer
@@ -20,8 +17,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class LoanSerializer(serializers.ModelSerializer):
-    loan_id = serializers.IntegerField(
-        source='get_loan_id', read_only=True)
+    loan_id = serializers.IntegerField(source='get_loan_id', read_only=True)
 
     class Meta:
         model = Loan
@@ -57,8 +53,7 @@ class LoanDetailSerializer(serializers.ModelSerializer):
 
 
 class LoanListSerializer(serializers.ModelSerializer):
-    repayments_left = serializers.IntegerField(
-        source='get_repayments_left', read_only=True)
+    repayments_left = serializers.IntegerField(source='get_repayments_left', read_only=True)
 
     class Meta:
         model = Loan

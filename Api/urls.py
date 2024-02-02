@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 from .views import CustomerView, createLoan, check_eligibility, LoanDetailView
 
 

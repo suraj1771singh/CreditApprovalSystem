@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
+
 from rest_framework import generics
-from .models import Customer, Loan
-from .serializers import CustomerSerializer, LoanSerializer, LoanDetailSerializer, LoanListSerializer
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
+
+from .models import Customer, Loan
+from .serializers import CustomerSerializer, LoanSerializer, LoanDetailSerializer, LoanListSerializer
 from .utils import calculate_credit_score, calculate_interest_rate, loan_approval_status, calculate_monthly_installment
 
 
@@ -13,13 +15,9 @@ class CustomerView(generics.ListCreateAPIView):
     serializer_class = CustomerSerializer
 
 
-class LoanView(generics.ListCreateAPIView):
+class LoanDetailView(generics.RetrieveAPIView, generics.ListAPIView):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
-
-
-class LoanDetailView(generics.RetrieveAPIView):
-    queryset = Loan.objects.all()
 
     def get_serializer_class(self):
         if 'loan_id' in self.request.query_params:
@@ -55,7 +53,9 @@ def createLoan(request):
 
         customer_id = request.data.get('customer_id')
         loan_amount = request.data.get('loan_amount')
+        interest_rate = request.data.get('interest_rate')
         tenure = request.data.get('tenure')
+        loan_id = request.data.get('loan_id')
 
         # Check customer exits
         customer = get_object_or_404(Customer, pk=customer_id)
@@ -64,9 +64,8 @@ def createLoan(request):
             credit_score = calculate_credit_score(customer_id, loan_amount)
 
             if loan_approval_status(customer_id, credit_score):
-                interest_rate = calculate_interest_rate(credit_score)
-                monthly_installment = calculate_monthly_installment(
-                    loan_amount, interest_rate, tenure)
+                interest_rate = max(interest_rate, calculate_interest_rate(credit_score))
+                monthly_installment = calculate_monthly_installment(loan_amount, interest_rate, tenure)
                 serializer_data = {
                     'customer_id': customer_id,
                     'loan_amount': loan_amount,
@@ -74,8 +73,7 @@ def createLoan(request):
                     'interest_rate': interest_rate,
                     'monthly_installment': monthly_installment,
                 }
-                serializer = LoanSerializer(
-                    data=serializer_data)
+                serializer = LoanSerializer(data=serializer_data)
                 if serializer.is_valid():
                     loan = serializer.save()
                     res_data = {
@@ -91,7 +89,6 @@ def createLoan(request):
                     'customer_id': customer_id,
                     'loan_approved': False,
                     'message': "Customer have Low Credit Score",
-                    'monthly_installment': 0
                 }
                 return Response(res_data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -122,8 +119,7 @@ def check_eligibility(request):
 
             new_interest_rate = calculate_interest_rate(credit_score)
 
-            monthly_installment = calculate_monthly_installment(
-                loan_amount, max(interest_rate, new_interest_rate), tenure)
+            monthly_installment = calculate_monthly_installment(loan_amount, max(interest_rate, new_interest_rate), tenure)
 
             response_data = {
                 "customer_id": customer_id,
