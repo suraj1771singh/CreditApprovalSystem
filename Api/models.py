@@ -1,6 +1,7 @@
 import datetime
 from django.db import models
 from dateutil.relativedelta import relativedelta
+from django.utils import timezone
 
 
 class Customer(models.Model):
@@ -18,6 +19,7 @@ class Customer(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     def save(self, *args, **kwargs):
+
         # ---Calculate approved_limit
         if self.approved_limit is None:
             self.approved_limit = round(36 * self.monthly_income, -5)
@@ -34,7 +36,8 @@ class Loan(models.Model):
     tenure = models.IntegerField()
     monthly_installment = models.FloatField(blank=True, null=True)
     emis_paid_on_time = models.IntegerField(default=0, blank=True, null=True)
-    approval_date = models.DateField(blank=True, null=True)
+    approval_date = models.DateField(
+        default=timezone.now, blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
     def get_loan_id(self):
@@ -53,9 +56,5 @@ class Loan(models.Model):
         if not self.end_date:
             self.end_date = self.approval_date + \
                 relativedelta(months=+self.tenure)
-
-        # ---Calculate monthly installments
-        if not self.monthly_installment:
-            # logic to calculate monthly_payment
-            self.monthly_installment = 80
+            
         super().save(*args, **kwargs)

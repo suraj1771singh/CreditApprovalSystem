@@ -8,15 +8,23 @@ import math
 logger = logging.getLogger(__name__)
 
 
-def calculate_credit_score(customer_id):
+def calculate_credit_score(customer_id, loan_amount):
     try:
+        # ----Check if customer doesn't have past loan
+        if not Loan.objects.filter(customer_id=customer_id).exists():
+
+            approved_limit = Customer.objects.get(
+                pk=customer_id).approved_limit
+            if loan_amount <= approved_limit:
+                return 60
+            else:
+                return 0
         score = (
             0.4 * calculate_past_loan_paid_on_time_score(customer_id)
             + 0.2 * calculate_loan_taken_in_past_score(customer_id)
             + 0.2 * calculate_loan_activity_current_year_score(customer_id)
             + 0.2 * calculate_loan_approved_volume_score(customer_id)
         )
-
         return math.ceil(score)
     except Exception as e:
         logger.error(
@@ -32,7 +40,7 @@ def calculate_past_loan_paid_on_time_score(customer_id):
             Sum("tenure")
         )["tenure__sum"]
 
-        if count_total_emis and count_total_emis != 0:
+        if count_paid_emis != None and count_total_emis and count_total_emis != 0:
             return round((count_paid_emis / count_total_emis) * 100, 2)
         else:
             return 0.0
@@ -113,6 +121,8 @@ def calculate_interest_rate(credit_score):
 
 
 def loan_approval_status(customer_id, credit_score):
+    if credit_score >= 50:
+        return True
     if credit_score < 10 or check_loan_limit_exceeded(customer_id) or check_emi_limit_exceeded(customer_id):
         return False
     else:

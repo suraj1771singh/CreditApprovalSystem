@@ -1,5 +1,6 @@
 from .models import Customer, Loan
 from rest_framework import serializers
+from .utils import loan_approval_status, calculate_interest_rate, calculate_credit_score, calculate_monthly_installment
 
 
 class CustomerSerializer(serializers.ModelSerializer):
@@ -22,12 +23,9 @@ class LoanSerializer(serializers.ModelSerializer):
     loan_id = serializers.IntegerField(
         source='get_loan_id', read_only=True)
 
-    loan_approved = serializers.BooleanField(
-        source='is_loan_approved', read_only=True)
-
     class Meta:
         model = Loan
-        fields = ['loan_id', 'customer_id', 'get_loan_id', 'loan_amount', 'loan_approved', 'interest_rate', 'tenure',
+        fields = ['loan_id', 'customer_id', 'loan_amount', 'interest_rate', 'tenure',
                   'monthly_installment', 'emis_paid_on_time', 'approval_date', 'end_date']
         extra_kwargs = {
             'approval_date': {'input_formats': ['%m/%d/%Y']},
