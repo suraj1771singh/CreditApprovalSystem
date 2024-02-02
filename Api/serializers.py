@@ -33,3 +33,36 @@ class LoanSerializer(serializers.ModelSerializer):
             'approval_date': {'input_formats': ['%m/%d/%Y']},
             'end_date': {'input_formats': ['%m/%d/%Y']},
         }
+
+
+class CustomerDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'age']
+
+
+class LoanDetailSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Loan
+        fields = ['id', 'loan_amount',
+                  'interest_rate', 'monthly_installment', 'tenure']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        customer_id = instance.customer_id
+        if customer_id is not None:
+            customer_instance = Customer.objects.get(pk=customer_id)
+            customer_serializer = CustomerDetailSerializer(customer_instance)
+            representation['customer'] = customer_serializer.data
+        return representation
+
+
+class LoanListSerializer(serializers.ModelSerializer):
+    repayments_left = serializers.IntegerField(
+        source='get_repayments_left', read_only=True)
+
+    class Meta:
+        model = Loan
+        fields = ['id', 'loan_amount',
+                  'interest_rate', 'monthly_installment', 'repayments_left']

@@ -18,7 +18,6 @@ class Customer(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     def save(self, *args, **kwargs):
-
         # ---Calculate approved_limit
         if self.approved_limit is None:
             self.approved_limit = round(36 * self.monthly_income, -5)
@@ -34,18 +33,17 @@ class Loan(models.Model):
     interest_rate = models.FloatField()
     tenure = models.IntegerField()
     monthly_installment = models.FloatField(blank=True, null=True)
-    emis_paid_on_time = models.IntegerField(blank=True, null=True)
+    emis_paid_on_time = models.IntegerField(default=0, blank=True, null=True)
     approval_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
 
     def get_loan_id(self):
         return self.id
 
-    def is_loan_approved(self):
-        return False
+    def get_repayments_left(self):
+        return self.tenure - self.emis_paid_on_time
 
     def save(self, *args, **kwargs):
-
         # ---Checking if customer exist
         if not Customer.objects.filter(pk=self.customer_id).exists():
             raise ValueError(

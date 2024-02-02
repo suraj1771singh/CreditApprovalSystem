@@ -1,7 +1,6 @@
-from django.shortcuts import render
 from rest_framework import generics
 from .models import Customer, Loan
-from .serializers import CustomerSerializer, LoanSerializer
+from .serializers import CustomerSerializer, LoanSerializer, LoanDetailSerializer, LoanListSerializer
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
@@ -16,6 +15,33 @@ class CustomerView(generics.ListCreateAPIView):
 class LoanView(generics.ListCreateAPIView):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
+
+
+class LoanDetailView(generics.RetrieveAPIView):
+    queryset = Loan.objects.all()
+
+    def get_serializer_class(self):
+        if 'loan_id' in self.request.query_params:
+            return LoanDetailSerializer
+        else:
+            return LoanListSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        loan_id = request.query_params.get('loan_id')
+        customer_id = request.query_params.get('customer_id')
+
+        if loan_id:
+            instance = Loan.objects.get(pk=loan_id)
+            serializer_class = self.get_serializer_class()
+            serializer = serializer_class(instance)
+        elif customer_id:
+            instance = Loan.objects.filter(customer_id=customer_id)
+            serializer_class = self.get_serializer_class()
+            serializer = serializer_class(instance, many=True)
+        else:
+            return Response({'error': 'Invalid URL. Please provide loan_id or customer_id.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
